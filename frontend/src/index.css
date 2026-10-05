@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Fonts */
+  --font-body-sm: "Inter", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-headline-md: "Inter", sans-serif;
+  --font-headline-lg: "Inter", sans-serif;
+  --font-headline-xl: "Inter", sans-serif;
+  --font-label-micro: "JetBrains Mono", monospace;
+  --font-label-telemetry: "JetBrains Mono", monospace;
+  
+  /* Text Sizes (Custom) */
+  --text-body-sm: 0.75rem;
+  --text-body-md: 0.875rem;
+  --text-body-lg: 1rem;
+  --text-headline-md: 1.125rem;
+  --text-headline-lg: 1.5rem;
+  --text-headline-xl: 2rem;
+  --text-label-micro: 0.6875rem;
+  --text-label-telemetry: 1.125rem;
+
+  /* Colors */
+  --color-dark-bg-base: #000000;
+  --color-dark-bg-subtle: #0a0a0c;
+  --color-dark-bg-elevated: #18181f;
+  --color-dark-bg-surface: #111116;
+  
+  --color-dark-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-dark-border-hairline: #22222a;
+  
+  --color-dark-text-primary: #ededed;
+  --color-dark-text-muted: #a1a1aa;
+  
+  --color-primary: #4cd7f6;
+  --color-primary-container: #06b6d4;
+  --color-on-primary: #003640;
+  
+  --color-surface-container-lowest: #0e0e13;
+  --color-surface-container-low: #1b1b20;
+  --color-surface-container: #1f1f24;
+  --color-surface-container-high: #2a292f;
+  --color-surface-container-highest: #35343a;
+  
+  --color-on-surface-variant: #bcc9cd;
+  --color-on-surface: #e4e1e9;
+  
+  --color-status-optimal: #10b981;
+  --color-status-warning: #f59e0b;
+  --color-status-critical: #f43f5e;
+  
+  --color-telemetry-cyan: #06b6d4;
+  --color-telemetry-blue: #3b82f6;
+  --color-accent-traffic: #f97316;
+  --color-accent-foundation: #ea580c;
+  
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+  
+  --color-outline-variant: #3d494c;
+  --color-outline: #869397;
+
+  /* Spacing */
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 0.75rem;
+  --spacing-space-lg: 1rem;
+  --spacing-gutter: 1rem;
+  --spacing-gutter-lg: 1.5rem;
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    overscroll-behavior: none;
+    background-color: var(--color-dark-bg-base);
+    color: var(--color-on-surface);
+    font-family: var(--font-body-md);
+  }
+  main > :first-child {
+    margin-top: 0 !important;
+  }
+  main > :last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+::-webkit-scrollbar {
+  display: none; /* Stitch design hides scrollbars entirely */
+}

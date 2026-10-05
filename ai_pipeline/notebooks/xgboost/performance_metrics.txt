@@ -1,0 +1,60 @@
+============================================================
+  XGBOOST MODEL PERFORMANCE REPORT
+  Bridge Condition Classification (bridge_data.csv)
+============================================================
+
+DATASET OVERVIEW
+----------------------------------------
+  Total samples:       720
+  Training samples:    576
+  Test samples:        144
+  Healthy (0):         619 (86.0%)
+  At-Risk (1):         101 (14.0%)
+  Imbalance ratio:     6.13:1
+  Features used:       10
+
+MEASURES APPLIED TO IMPROVE PRECISION & RECALL
+----------------------------------------
+  1. Class imbalance handling (scale_pos_weight)
+  2. Enhanced feature engineering (interactions, bins)
+  3. Tuned hyperparameters with Stratified 5-Fold CV
+  4. Optimal decision threshold tuning
+
+CROSS-VALIDATION RESULTS (5-Fold Stratified)
+----------------------------------------
+  F1 mean:             0.6747 (+/- 0.0327)
+  Recall mean:         0.8154 (+/- 0.0769)
+  Precision mean:      0.5825 (+/- 0.0626)
+
+TEST SET METRICS (Default Threshold = 0.50)
+----------------------------------------
+  accuracy             0.8472
+  precision            0.4667
+  recall               0.7000
+  f1                   0.5600
+  roc_auc              0.9036
+
+TEST SET METRICS (Optimal Threshold = 0.22)
+----------------------------------------
+  accuracy             0.8333
+  precision            0.4524
+  recall               0.9500
+  f1                   0.6129
+  roc_auc              0.9036
+
+IMPROVEMENT SUMMARY
+----------------------------------------
+  precision            -0.0143
+  recall               +0.2500
+  f1                   +0.0529
+
+DETAILED CLASSIFICATION REPORT (Optimal Threshold)
+----------------------------------------
+              precision    recall  f1-score   support
+
+ Healthy (0)       0.99      0.81      0.89       124
+ At-Risk (1)       0.45      0.95      0.61        20
+
+    accuracy                           0.83       144
+   macro avg       0.72      0.88      0.75       144
+weighted avg       0.92      0.83      0.85       144

@@ -1,0 +1,1 @@
+{"features": ["Strain_microstrain", "Deflection_mm", "Vibration_ms2", "Tilt_deg", "Displacement_mm", "Temperature_C", "Humidity_percent", "Wind_Speed_ms", "Water_Level_m", "Seismic_Activity_ms2", "Vehicle_Load_tons", "Traffic_Volume_vph", "Dynamic_Load_Distribution_percent"], "seq_length": 60}
