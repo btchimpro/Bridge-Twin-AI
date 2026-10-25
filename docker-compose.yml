@@ -12,6 +12,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-bridgetwin}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: 
@@ -21,17 +26,26 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-bridgetwin}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      TOMTOM_API_KEY: ${TOMTOM_API_KEY:-}
+      AI_MODELS_DIR: /ai_pipeline/models
+      PYTHONUNBUFFERED: "1"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./backend:/app
       - ./ai_pipeline:/ai_pipeline
+
   frontend:
     build:
       context: ./frontend
     container_name: bridgetwin_frontend
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules

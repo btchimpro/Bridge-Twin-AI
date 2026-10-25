@@ -70,12 +70,14 @@ def compute_indicators(
     env_means: Dict[str, float],
     strain_mean: float,
     strain_reference: float,
+    current_traffic_vph: float | None = None,
 ) -> EngineeringIndicators:
     age = profile.age_years
     maint = MAINTENANCE_ENCODING.get(profile.maintenance_level, 0)
 
     age_factor = _clip01(age / profile.design_life_years)
-    traffic_load_factor = _clip01(profile.peak_direction_vph / 5000.0)
+    effective_vph = current_traffic_vph if current_traffic_vph is not None else profile.peak_direction_vph
+    traffic_load_factor = _clip01(effective_vph / 5000.0)
 
     # Environmental degradation: marine exposure dominates for all MVP bridges
     exposure = 1.0 if "severe" in profile.exposure_class.lower() else 0.8 if "marine" in profile.exposure_class.lower() else 0.4

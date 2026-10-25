@@ -17,6 +17,32 @@ def predict_bridge_risk(request: RiskPredictionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/predict/risk/svm")
+def predict_bridge_risk_svm(request: RiskPredictionRequest):
+    """
+    Predict bridge risk condition using the Support Vector Machine (SVM).
+    """
+    try:
+        result = ai_service.predict_svm_risk(request.model_dump())
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/predict/risk/dual")
+def predict_bridge_risk_dual(request: RiskPredictionRequest):
+    """
+    Evaluate bridge condition using both XGBoost and SVM with consensus analysis.
+    """
+    try:
+        result = ai_service.predict_dual_risk(request.model_dump())
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/predict/shi", response_model=SHIPredictionResponse)
 def predict_structural_health_index(request: SHIPredictionRequest):
     """

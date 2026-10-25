@@ -1,0 +1,121 @@
+================================================================
+  SVM MODEL PERFORMANCE REPORT
+  Bridge Condition Classification (bridge_data.csv)
+================================================================
+
+DATASET OVERVIEW
+--------------------------------------------
+  Total samples:       720
+  Training samples:    576
+  Test samples:        144
+  Healthy (0):         619 (86.0%)
+  At-Risk (1):         101 (14.0%)
+  Imbalance ratio:     6.13:1
+  Features used:       10
+
+MODEL CONFIGURATION
+--------------------------------------------
+  Pipeline:            StandardScaler -> SVC
+  class_weight:        balanced
+  Probabilities:       Platt scaling (probability=True)
+  C                    50
+  gamma                0.05
+  kernel               rbf
+  Support vectors:     147 (Healthy=111, At-Risk=36) = 25.5% of train
+  Grid candidates:     52
+
+BEST CV F1 BY KERNEL
+--------------------------------------------
+  rbf                  0.6483
+  linear               0.6235
+  poly                 0.6068
+
+CROSS-VALIDATION RESULTS (5-Fold Stratified, native SVC boundary)
+--------------------------------------------
+  f1                   0.6483 (+/- 0.0468)
+  recall               0.9375 (+/- 0.0968)
+  precision            0.4972 (+/- 0.0344)
+  roc_auc              0.9228 (+/- 0.0265)
+  accuracy             0.8576 (+/- 0.0181)
+
+THRESHOLD SELECTION
+--------------------------------------------
+  Tuned on OOF train:  0.25 (OOF F1 = 0.6580)
+  Test-optimal (ref):  0.13 (test F1 = 0.6154) [not used - would leak]
+
+TEST SET METRICS       Native f(x)>0       P>=0.50       P>=0.25
+----------------------------------------------------------------
+  accuracy                    0.8264        0.8403        0.8125
+  balanced_accuracy           0.8782        0.6347        0.8073
+  precision                   0.4419        0.4118        0.4103
+  recall                      0.9500        0.3500        0.8000
+  specificity                 0.8065        0.9194        0.8145
+  f1                          0.6032        0.3784        0.5424
+  mcc                         0.5716        0.2887        0.4782
+  roc_auc                     0.8988        0.8988        0.8988
+  pr_auc                      0.4413        0.4413        0.4413
+  brier_score                 0.0854        0.0854        0.0854
+  TN/FP/FN/TP            100/24/1/19   114/10/13/7   101/23/4/16
+  (ROC-AUC, PR-AUC, Brier are threshold-independent.)
+
+OVERFITTING CHECK (tuned threshold)
+--------------------------------------------
+  f1                   train=0.6923  test=0.5424  gap=+0.1499
+  recall               train=1.0000  test=0.8000  gap=+0.2000
+  precision            train=0.5294  test=0.4103  gap=+0.1192
+  roc_auc              train=0.9477  test=0.8988  gap=+0.0489
+
+SVM vs XGBOOST (identical test split)
+--------------------------------------------
+  metric                  SVM@0.25    XGB@0.22    SVM@0.50    XGB@0.50
+  accuracy                  0.8125      0.8333      0.8403      0.8472
+  balanced_accuracy         0.8073      0.8823      0.6347      0.7855
+  precision                 0.4103      0.4524      0.4118      0.4667
+  recall                    0.8000      0.9500      0.3500      0.7000
+  specificity               0.8145      0.8145      0.9194      0.8710
+  f1                        0.5424      0.6129      0.3784      0.5600
+  mcc                       0.4782      0.5817      0.2887      0.4862
+  roc_auc                   0.8988      0.9036      0.8988      0.9036
+  pr_auc                    0.4413      0.4778      0.4413      0.4778
+  brier_score               0.0854      0.1075      0.0854      0.1075
+  NOTE: XGBoost's threshold was tuned on the test set in train_model.py,
+        so its tuned figures are optimistic. SVM's threshold is leak-free.
+
+PERMUTATION IMPORTANCE (drop in ROC-AUC, test set)
+--------------------------------------------
+  age_bin                            +0.2093 (+/- 0.0378)
+  log_traffic                        +0.0945 (+/- 0.0456)
+  age_squared                        +0.0193 (+/- 0.0127)
+  age_traffic_interaction            +0.0077 (+/- 0.0162)
+  age_factor                         +0.0074 (+/- 0.0128)
+  Material_Type_Steel                +0.0044 (+/- 0.0103)
+  maintenance_encoded                -0.0032 (+/- 0.0119)
+  traffic_maintenance_interaction    -0.0052 (+/- 0.0109)
+  traffic_load_factor                -0.0091 (+/- 0.0090)
+  age_maintenance_interaction        -0.0154 (+/- 0.0124)
+
+SHAP MEAN |VALUE| (impact on P[At-Risk])
+--------------------------------------------
+  age_bin                            0.1535
+  log_traffic                        0.0655
+  age_squared                        0.0493
+  age_traffic_interaction            0.0379
+  traffic_load_factor                0.0228
+  Material_Type_Steel                0.0224
+  age_factor                         0.0222
+  maintenance_encoded                0.0161
+  age_maintenance_interaction        0.0160
+  traffic_maintenance_interaction    0.0130
+
+DETAILED CLASSIFICATION REPORT (Tuned Threshold)
+--------------------------------------------
+              precision    recall  f1-score   support
+
+ Healthy (0)       0.96      0.81      0.88       124
+ At-Risk (1)       0.41      0.80      0.54        20
+
+    accuracy                           0.81       144
+   macro avg       0.69      0.81      0.71       144
+weighted avg       0.89      0.81      0.83       144
+
+Total pipeline runtime: 15.1s

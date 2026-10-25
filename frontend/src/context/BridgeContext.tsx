@@ -9,6 +9,9 @@ export interface BridgeInfo {
   lon: number;
   status: string;
   risk: string;
+  priority?: string;
+  consensus?: string;
+  ensemble_risk_probability?: number;
 }
 
 interface BridgeContextType {

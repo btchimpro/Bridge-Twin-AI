@@ -1,0 +1,4 @@
+{
+  "optimal_threshold": 0.25000000000000006,
+  "selection_method": "max F1 on 5-fold out-of-fold training probabilities"
+}

@@ -1,0 +1,12 @@
+[
+  "maintenance_encoded",
+  "Material_Type_Steel",
+  "age_factor",
+  "traffic_load_factor",
+  "age_squared",
+  "age_traffic_interaction",
+  "age_maintenance_interaction",
+  "traffic_maintenance_interaction",
+  "age_bin",
+  "log_traffic"
+]

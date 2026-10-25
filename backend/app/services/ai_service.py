@@ -9,13 +9,31 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
 # --- Model Paths ---
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-AI_MODELS_DIR = os.path.join(BASE_DIR, 'ai_pipeline', 'models')
+def _resolve_models_dir():
+    candidates = [
+        os.getenv('AI_MODELS_DIR'),
+        '/ai_pipeline/models',
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'ai_pipeline', 'models'),
+        os.path.join(os.getcwd(), 'ai_pipeline', 'models'),
+        os.path.join(os.getcwd(), '..', 'ai_pipeline', 'models'),
+    ]
+    for c in candidates:
+        if c and os.path.exists(c):
+            return os.path.abspath(c)
+    return '/ai_pipeline/models'
+
+AI_MODELS_DIR = _resolve_models_dir()
 
 # XGBoost paths
 XGB_MODEL_PATH = os.path.join(AI_MODELS_DIR, 'xgboost', 'condition_xgboost.joblib')
 XGB_FEATURES_PATH = os.path.join(AI_MODELS_DIR, 'xgboost', 'model_features.joblib')
 XGB_THRESHOLD_PATH = os.path.join(AI_MODELS_DIR, 'xgboost', 'optimal_threshold.json')
+
+# SVM paths
+SVM_MODEL_PATH = os.path.join(AI_MODELS_DIR, 'svm', 'svm_condition_model.joblib')
+SVM_FEATURES_PATH = os.path.join(AI_MODELS_DIR, 'svm', 'svm_features.json')
+SVM_THRESHOLD_PATH = os.path.join(AI_MODELS_DIR, 'svm', 'svm_threshold.json')
+SVM_BEST_PARAMS_PATH = os.path.join(AI_MODELS_DIR, 'svm', 'svm_best_params.json')
 
 # LSTM paths
 LSTM_MODEL_PATH = os.path.join(AI_MODELS_DIR, 'lstm', 'shi_lstm_model.pth')
@@ -51,6 +69,11 @@ class AIService:
         self.xgb_model = None
         self.xgb_features = None
         self.xgb_threshold = 0.5
+
+        self.svm_model = None
+        self.svm_features = None
+        self.svm_threshold = 0.25
+        self.svm_best_params = {}
         
         self.lstm_model = None
         self.lstm_scaler = None
@@ -70,6 +93,22 @@ class AIService:
             print("XGBoost loaded.")
         else:
             print("Warning: XGBoost model not found.")
+
+        # Load SVM
+        if os.path.exists(SVM_MODEL_PATH):
+            self.svm_model = joblib.load(SVM_MODEL_PATH)
+            if os.path.exists(SVM_FEATURES_PATH):
+                with open(SVM_FEATURES_PATH, 'r') as f:
+                    self.svm_features = json.load(f)
+            if os.path.exists(SVM_THRESHOLD_PATH):
+                with open(SVM_THRESHOLD_PATH, 'r') as f:
+                    self.svm_threshold = json.load(f).get('optimal_threshold', 0.25)
+            if os.path.exists(SVM_BEST_PARAMS_PATH):
+                with open(SVM_BEST_PARAMS_PATH, 'r') as f:
+                    self.svm_best_params = json.load(f)
+            print("SVM loaded.")
+        else:
+            print("Warning: SVM model not found.")
             
         # Load LSTM
         if os.path.exists(LSTM_MODEL_PATH):
@@ -180,6 +219,109 @@ class AIService:
             "is_at_risk": bool(is_at_risk),
             "risk_probability": float(y_prob),
             "threshold_used": float(self.xgb_threshold)
+        }
+
+    def predict_svm_risk(self, bridge_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Predict bridge risk condition using the Support Vector Machine (SVM) pipeline.
+        Utilizes native decision boundary (decision_function > 0) with balanced weights
+        and Platt-scaled calibrated probabilities.
+        """
+        if not self.svm_model:
+            return {"error": "SVM model not loaded"}
+
+        X = self._build_xgb_frame(bridge_data)
+        if self.svm_features:
+            X = pd.DataFrame(X[self.svm_features].values, columns=self.svm_features, dtype=float)
+
+        y_prob = float(self.svm_model.predict_proba(X)[0][1])
+        decision_val = float(self.svm_model.decision_function(X)[0])
+        # Native decision boundary with class_weight='balanced' achieves 0.95 recall
+        is_at_risk_native = bool(decision_val > 0)
+        is_at_risk_prob = bool(y_prob >= self.svm_threshold)
+
+        return {
+            "is_at_risk": is_at_risk_native,
+            "risk_probability": round(y_prob, 4),
+            "decision_function": round(decision_val, 4),
+            "is_at_risk_prob_threshold": is_at_risk_prob,
+            "threshold_used": float(self.svm_threshold),
+            "model_type": "Support Vector Classifier (RBF kernel, balanced weights)"
+        }
+
+    def predict_dual_risk(self, bridge_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Evaluate risk using both XGBoost and SVM, compute consensus, ensemble probability,
+        and agreement confidence score.
+        """
+        xgb_res = self.predict_risk(bridge_data)
+        svm_res = self.predict_svm_risk(bridge_data)
+
+        if "error" in xgb_res and "error" in svm_res:
+            return {"error": "Both risk models failed to execute"}
+        elif "error" in svm_res:
+            return {
+                "xgb": xgb_res,
+                "svm": None,
+                "consensus": "at_risk" if xgb_res.get("is_at_risk") else "healthy",
+                "consensus_label": "XGBoost Solo (SVM unavailable)",
+                "models_agree": True,
+                "ensemble_probability": xgb_res.get("risk_probability", 0.0),
+                "is_at_risk": bool(xgb_res.get("is_at_risk")),
+                "risk_probability": xgb_res.get("risk_probability", 0.0),
+                "confidence_score": 0.80,
+                "threshold_used": xgb_res.get("threshold_used", 0.5)
+            }
+        elif "error" in xgb_res:
+            return {
+                "xgb": None,
+                "svm": svm_res,
+                "consensus": "at_risk" if svm_res.get("is_at_risk") else "healthy",
+                "consensus_label": "SVM Solo (XGBoost unavailable)",
+                "models_agree": True,
+                "ensemble_probability": svm_res.get("risk_probability", 0.0),
+                "is_at_risk": bool(svm_res.get("is_at_risk")),
+                "risk_probability": svm_res.get("risk_probability", 0.0),
+                "confidence_score": 0.80,
+                "threshold_used": svm_res.get("threshold_used", 0.25)
+            }
+
+        p_xgb = float(xgb_res["risk_probability"])
+        p_svm = float(svm_res["risk_probability"])
+        ensemble_p = round((p_xgb + p_svm) / 2.0, 4)
+
+        flag_xgb = bool(xgb_res["is_at_risk"])
+        flag_svm = bool(svm_res["is_at_risk"])
+        models_agree = (flag_xgb == flag_svm)
+
+        if flag_xgb and flag_svm:
+            consensus = "unanimous_at_risk"
+            consensus_label = "Unanimous At-Risk"
+            is_at_risk = True
+            confidence = 0.92
+        elif not flag_xgb and not flag_svm:
+            consensus = "unanimous_healthy"
+            consensus_label = "Unanimous Healthy"
+            is_at_risk = False
+            confidence = 0.90
+        else:
+            consensus = "divergent"
+            consensus_label = "Divergent (Review Recommended)"
+            # Safety-first policy for critical infrastructure: flag if either model detects risk
+            is_at_risk = True
+            confidence = 0.65
+
+        return {
+            "xgb": xgb_res,
+            "svm": svm_res,
+            "consensus": consensus,
+            "consensus_label": consensus_label,
+            "models_agree": models_agree,
+            "ensemble_probability": ensemble_p,
+            "is_at_risk": is_at_risk,
+            "risk_probability": ensemble_p,
+            "confidence_score": confidence,
+            "threshold_used": xgb_res.get("threshold_used", 0.5)
         }
 
     # ------------------------------------------------------------------

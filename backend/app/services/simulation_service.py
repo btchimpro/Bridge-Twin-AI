@@ -92,6 +92,8 @@ def simulate_window(
     feature_stds: Dict[str, float],
     seq_length: int = 60,
     now: datetime | None = None,
+    weather_data: Dict[str, Any] | None = None,
+    traffic_data: Dict[str, Any] | None = None,
 ) -> SimulatedWindow:
     bucket = current_bucket(now)
     seed = zlib.crc32(f"{profile.id}|{bucket.isoformat()}".encode())
@@ -107,7 +109,10 @@ def simulate_window(
     ar = np.zeros(seq_length)
     for i in range(1, seq_length):
         ar[i] = 0.9 * ar[i - 1] + rng.normal(0, 0.25)
-    latent = offset + 1.4 * (diurnal - 0.45) + ar
+    
+    # Scale latent load if dynamic traffic multiplier is provided
+    traffic_mult = float(traffic_data.get("load_multiplier", 1.0)) if traffic_data else 1.0
+    latent = (offset + 1.4 * (diurnal - 0.45) + ar) * traffic_mult
 
     channels: Dict[str, np.ndarray] = {}
     for name, beta in LOAD_BETAS.items():
@@ -115,14 +120,27 @@ def simulate_window(
         idio = rng.normal(0, math.sqrt(max(1 - beta**2, 0.05)), seq_length) * 0.6
         channels[name] = mu + sd * (beta * latent + idio)
 
-    # Environmental channels – Mumbai climatology-informed (simulated)
+    # Environmental channels – Live Weather if provided, otherwise Mumbai climatology
     day_phase = 2 * math.pi * (hours - 15.0) / 24.0  # warmest ≈ 15:00
-    channels["Temperature_C"] = 29.5 + 2.8 * np.cos(day_phase) + rng.normal(0, 0.3, seq_length)
-    channels["Humidity_percent"] = np.clip(
-        76.0 - 6.0 * np.cos(day_phase) + rng.normal(0, 1.2, seq_length), 40, 100
-    )
-    gust = np.abs(rng.normal(0, 0.8, seq_length))
-    channels["Wind_Speed_ms"] = 5.0 + 1.5 * np.cos(day_phase) + gust
+    if weather_data:
+        live_temp = float(weather_data.get("temperature_c", 30.0))
+        live_hum = float(weather_data.get("humidity_percent", 65.0))
+        live_wind = float(weather_data.get("wind_speed_ms", 4.0))
+        channels["Temperature_C"] = live_temp + 0.4 * np.cos(day_phase) + rng.normal(0, 0.2, seq_length)
+        channels["Humidity_percent"] = np.clip(
+            live_hum - 1.5 * np.cos(day_phase) + rng.normal(0, 0.8, seq_length), 30, 100
+        )
+        channels["Wind_Speed_ms"] = np.clip(
+            live_wind + 0.5 * np.cos(day_phase) + rng.normal(0, 0.4, seq_length), 0, None
+        )
+    else:
+        channels["Temperature_C"] = 29.5 + 2.8 * np.cos(day_phase) + rng.normal(0, 0.3, seq_length)
+        channels["Humidity_percent"] = np.clip(
+            76.0 - 6.0 * np.cos(day_phase) + rng.normal(0, 1.2, seq_length), 40, 100
+        )
+        gust = np.abs(rng.normal(0, 0.8, seq_length))
+        channels["Wind_Speed_ms"] = 5.0 + 1.5 * np.cos(day_phase) + gust
+
     tide_phase = 2 * math.pi * (hours / 12.42)  # semi-diurnal tide
     channels["Water_Level_m"] = feature_means["Water_Level_m"] + 0.35 * np.sin(tide_phase + seed % 7)
     channels["Seismic_Activity_ms2"] = rng.normal(0, feature_stds["Seismic_Activity_ms2"] * 0.5, seq_length)
