@@ -10,14 +10,16 @@ RUN apt-get update && apt-get install -y libpq-dev gcc \
 COPY backend/requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend application source code
+# Copy backend application source code and root entrypoint
 COPY backend/ /app/
+COPY main.py /app/main.py
 
 # Copy trained AI pipeline models into container
 COPY ai_pipeline/ /ai_pipeline/
 
 ENV PYTHONUNBUFFERED=1
 ENV AI_MODELS_DIR=/ai_pipeline/models
+ENV PYTHONPATH="/app:/app/backend:$PYTHONPATH"
 ENV PORT=8000
 
 EXPOSE 8000
