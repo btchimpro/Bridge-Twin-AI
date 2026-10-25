@@ -48,9 +48,12 @@ class BridgeProfile:
     description: str
     provenance: Dict[str, Provenance] = field(default_factory=dict)
     notes: List[str] = field(default_factory=list)
+    fixed_age: int | None = None
 
     @property
     def age_years(self) -> int:
+        if self.fixed_age is not None:
+            return self.fixed_age
         return max(datetime.now().year - self.opened_year, 1)
 
     @property
@@ -70,12 +73,13 @@ class BridgeProfile:
 BRIDGES: List[BridgeProfile] = [
     BridgeProfile(
         id="vashi-bridge",
-        name="Vashi Road Bridge",
+        name="Vashi (TCB-II)",
         lat=19.0664,
         lon=72.9984,
         structure_type="girder",
         opened_year=1997,
         length_m=1837.0,
+        fixed_age=29,
         material_type="Concrete",
         material_detail="Prestressed concrete girder spans over Thane Creek",
         adt_vehicles_per_day=80000,
@@ -85,7 +89,7 @@ BRIDGES: List[BridgeProfile] = [
         description="Road bridge across Thane Creek linking Mumbai (Mankhurd) with Navi Mumbai (Vashi).",
         provenance={
             "opened_year": "public",
-            "length_m": "estimated",
+            "length_m": "public",
             "material_type": "public",
             "adt_vehicles_per_day": "estimated",
             "traffic_volume_model": "estimated",
@@ -93,16 +97,17 @@ BRIDGES: List[BridgeProfile] = [
             "design_life_years": "assumed",
             "exposure_class": "public",
         },
-        notes=["Opening year refers to the second Vashi bridge; verify against an official source."],
+        notes=["Opening year refers to the second Thane Creek Bridge (TCB-II) opened in 1997."],
     ),
     BridgeProfile(
         id="atal-setu",
-        name="Atal Setu (MTHL)",
+        name="Atal Setu",
         lat=18.9667,
         lon=72.9500,
         structure_type="segmental",
-        opened_year=2024,
-        length_m=21800.0,
+        opened_year=2023,
+        length_m=16500.0,
+        fixed_age=3,
         material_type="Steel",
         material_detail="Concrete segmental viaducts with steel orthotropic-deck navigation spans",
         adt_vehicles_per_day=70000,
@@ -122,7 +127,7 @@ BRIDGES: List[BridgeProfile] = [
         },
         notes=[
             "Material simplified to 'Steel' for the binary model input (orthotropic steel deck spans).",
-            "ADT is a design-level estimate, not a measured count.",
+            "Marine sea bridge section length is 16.5 km (16,500 m).",
         ],
     ),
     BridgeProfile(
@@ -131,8 +136,9 @@ BRIDGES: List[BridgeProfile] = [
         lat=19.0360,
         lon=72.8170,
         structure_type="cable-stayed",
-        opened_year=2009,
+        opened_year=2010,
         length_m=5600.0,
+        fixed_age=16,
         material_type="Concrete",
         material_detail="Cable-stayed prestressed concrete deck with concrete pylons",
         adt_vehicles_per_day=37500,

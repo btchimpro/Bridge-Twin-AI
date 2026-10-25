@@ -36,6 +36,8 @@ def list_bridges():
             lon=b.lon,
             status=status,
             risk=risk_label,
+            age_years=b.age_years,
+            length_m=b.length_m,
             priority=risk_label,
             consensus=dual_risk.get("consensus_label", "Consensus Evaluated"),
             ensemble_risk_probability=prob

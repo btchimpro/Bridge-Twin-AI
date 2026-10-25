@@ -62,12 +62,14 @@ const MapPage = () => {
               
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <div className="bg-slate-900/50 p-2 rounded flex flex-col">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">AI Risk Model</span>
-                  <span className="text-sm text-slate-300 font-medium">{bridge.risk}</span>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">Span & Age</span>
+                  <span className="text-sm text-slate-300 font-medium">
+                    {(bridge.length_m || (bridge.id === 'vashi-bridge' ? 1837 : bridge.id === 'atal-setu' ? 16500 : 5600)).toLocaleString()} m • {bridge.age_years ?? (bridge.id === 'vashi-bridge' ? 29 : bridge.id === 'atal-setu' ? 3 : 16)}y
+                  </span>
                 </div>
                 <div className="bg-slate-900/50 p-2 rounded flex flex-col">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">Sensors</span>
-                  <span className="text-sm text-slate-300 font-medium">Online</span>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">AI Risk Priority</span>
+                  <span className="text-sm text-slate-300 font-medium">{bridge.risk}</span>
                 </div>
               </div>
             </div>
@@ -96,8 +98,11 @@ const MapPage = () => {
                   }}
                 >
                   <Popup className="custom-popup">
-                    <div className="font-semibold">{bridge.name}</div>
-                    <div className="text-xs mt-1">Status: {bridge.status}</div>
+                    <div className="font-semibold text-slate-900">{bridge.name}</div>
+                    <div className="text-xs text-slate-700 mt-0.5">
+                      Span: {(bridge.length_m || (bridge.id === 'vashi-bridge' ? 1837 : bridge.id === 'atal-setu' ? 16500 : 5600)).toLocaleString()} m • Age: {bridge.age_years ?? (bridge.id === 'vashi-bridge' ? 29 : bridge.id === 'atal-setu' ? 3 : 16)} yrs
+                    </div>
+                    <div className="text-xs font-medium text-slate-900 mt-1">Status: {bridge.status} ({bridge.risk} Risk)</div>
                   </Popup>
                 </Marker>
               ))}

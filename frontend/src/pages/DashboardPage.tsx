@@ -106,7 +106,11 @@ const DashboardPage = () => {
   const llm = assessment?.llm_analysis;
   const plan = llm?.maintenance_plan;
   const xai = assessment?.explainability;
-  const bridgeName = bridge?.name || 'Loading Bridge Asset...';
+  const bridgeFallbackName =
+    selectedBridgeId === 'vashi-bridge' ? 'Vashi (TCB-II)' :
+    selectedBridgeId === 'atal-setu' ? 'Atal Setu' :
+    selectedBridgeId === 'bandra-worli-sea-link' ? 'Bandra-Worli Sea Link' : 'Bridge Digital Twin';
+  const bridgeName = bridge?.name || bridgeFallbackName;
 
   // Risk priority color theme
   const priority = fused?.priority || 'Low';
@@ -151,9 +155,9 @@ const DashboardPage = () => {
             <span>•</span>
             <span>Material: <strong className="text-dark-text-primary font-medium">{bridge?.material_type || 'Concrete / Steel'}</strong></span>
             <span>•</span>
-            <span>Age: <strong className="text-dark-text-primary font-medium">{bridge?.age_years || 15} yrs</strong></span>
+            <span>Age: <strong className="text-dark-text-primary font-medium">{bridge?.age_years ?? (selectedBridgeId === 'vashi-bridge' ? 29 : selectedBridgeId === 'atal-setu' ? 3 : 16)} yrs</strong></span>
             <span>•</span>
-            <span>Span: <strong className="text-dark-text-primary font-medium">{bridge?.length_m || 3800} m</strong></span>
+            <span>Span: <strong className="text-dark-text-primary font-medium">{(bridge?.length_m ?? (selectedBridgeId === 'vashi-bridge' ? 1837 : selectedBridgeId === 'atal-setu' ? 16500 : 5600)).toLocaleString()} m</strong></span>
             <span>•</span>
             <span className="text-cyan-400 font-mono text-[11px] uppercase tracking-wider">{bridge?.exposure_class || 'Severe Marine'}</span>
           </div>

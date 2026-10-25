@@ -8,6 +8,8 @@ class BridgeInfo(BaseModel):
     lon: float
     status: str
     risk: str
+    age_years: Optional[int] = None
+    length_m: Optional[float] = None
     priority: Optional[str] = None
     consensus: Optional[str] = None
     ensemble_risk_probability: Optional[float] = None
